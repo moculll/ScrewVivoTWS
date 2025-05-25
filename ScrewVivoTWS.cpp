@@ -9,7 +9,8 @@ ScrewVivoTWS::ScrewVivoTWS(QWidget *parent)
     
     
     device = VivoController::init();
-    device->connect();
+    if(device)
+        device->connect();
 
     connect(ui.sendBtn, &QPushButton::clicked, [&]() {
     
@@ -22,7 +23,8 @@ ScrewVivoTWS::ScrewVivoTWS(QWidget *parent)
             printf("%02x ", doubleClick.data[i]);
         }
         printf("\r\n");
-        device->write(doubleClick.data);
+        if(device)
+            device->write(doubleClick.data);
         
         
     });

@@ -82,16 +82,7 @@ public:
             }
 
         }
-        /*void setRightDoubleClick(EarDoubleClickMode mode) {
-            const auto& map = getBaseCommandMap();
-            auto it = map.find("setNoise");
-            if (it != map.end()) {
-                data = it->second;
-                if(data.size()) {
-                    data[data.size() - 1] = (static_cast<uint8_t>(mode) << 4) & 0xf8;
-                }
-            }
-        }*/
+        
 
     };
 
@@ -324,25 +315,6 @@ private:
 class VivoController {
 public:
 
-    static std::unique_ptr<VivoDevice> tryMatch()
-    {
-        auto result = getPairedBluetoothDevices();
-        for (auto dev : result) {
-            printf("device: %s\r\n", dev.name.c_str());
-            for (auto matchName : supportDevices) {
-                if (dev.name == matchName) {
-                    QString addrStr = btAddressToString(dev.address);
-                    std::unique_ptr<VivoDevice> newDevice = std::make_unique<VivoDevice>(std::string(matchName), addrStr);
-                   
-                    printf("matched: %s\r\n", addrStr.toLocal8Bit().toStdString().c_str());
-                    return newDevice;
-                }
-            }
-
-        }
-        
-    }
-
     static std::unique_ptr<VivoDevice> init()
     {
         auto matchedDevicePtr = tryMatch();
@@ -351,10 +323,6 @@ public:
         return matchedDevicePtr;
     }
 
-    static void test()
-    {
-
-    }
     
 private:
     static constexpr std::array<std::string_view, 1> supportDevices = {
@@ -368,7 +336,24 @@ private:
 
 
     /*static void connectToDeviceWithQt(QString& addrStr);*/
+    static std::unique_ptr<VivoDevice> tryMatch()
+    {
+        auto result = getPairedBluetoothDevices();
+        for (auto dev : result) {
+            printf("device: %s\r\n", dev.name.c_str());
+            for (auto matchName : supportDevices) {
+                if (dev.name == matchName) {
+                    QString addrStr = btAddressToString(dev.address);
+                    std::unique_ptr<VivoDevice> newDevice = std::make_unique<VivoDevice>(std::string(matchName), addrStr);
 
+                    printf("matched: %s\r\n", addrStr.toLocal8Bit().toStdString().c_str());
+                    return newDevice;
+                }
+            }
+
+        }
+        return nullptr;
+    }
     static QString btAddressToString(const BLUETOOTH_ADDRESS& addr);
     static std::string wideToUtf8(const std::wstring& wstr);
     static std::vector<BtDevice> getPairedBluetoothDevices();
