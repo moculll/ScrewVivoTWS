@@ -24,6 +24,9 @@
     <Filter Include="VivoController">
       <UniqueIdentifier>{15c9c53c-3013-47f3-95ab-4034029d5fba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="AccessMgr">
+      <UniqueIdentifier>{c465b00d-571c-43c6-aaad-f899b2d8e923}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="ScrewVivoTWS.qrc">
@@ -46,10 +49,16 @@
     <ClCompile Include="VivoController\VivoController.cpp">
       <Filter>VivoController</Filter>
     </ClCompile>
+    <ClCompile Include="Accessibility\AccessMgr.cpp">
+      <Filter>AccessMgr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VivoController\VivoController.h">
       <Filter>VivoController</Filter>
+    </ClInclude>
+    <ClInclude Include="Accessibility\AccessMgr.h">
+      <Filter>AccessMgr</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

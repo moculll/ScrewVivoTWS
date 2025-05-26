@@ -226,16 +226,16 @@ public:
     {
         deviceName = name;
         macAddr = addr;
-        printf("created vivo device: %s\r\n", macAddr.toLocal8Bit().toStdString().c_str());
+        
         QBluetoothAddress btAddr(macAddr);
         socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol);
         
         QObject::connect(socket, &QBluetoothSocket::disconnected, [&]() {
-            printf("device disconnected.\r\n");
+
             socket->deleteLater();
         });
         QObject::connect(socket, &QBluetoothSocket::connected, [&]() {
-            printf("device connected.\r\n");
+
         });
         /*socket->connectToService(btAddr, 13);*/
     }
@@ -293,7 +293,7 @@ public:
     {
         if(!socket)
             return;
-        printf("try connect to channel 13\r\n");
+  
         socket->connectToService(QBluetoothAddress(macAddr), 13);
     }
 
@@ -301,7 +301,6 @@ public:
     {
         if (socket) {
          
-            printf("destoryed socket, name: %s, addr: %s\r\n", deviceName.c_str(), macAddr.toLocal8Bit().toStdString().c_str());
             socket->close();
             socket->deleteLater();
             socket = nullptr;
@@ -319,7 +318,6 @@ public:
     {
         auto matchedDevicePtr = tryMatch();
         
-        printf("inited.\r\n");
         return matchedDevicePtr;
     }
 
@@ -340,13 +338,12 @@ private:
     {
         auto result = getPairedBluetoothDevices();
         for (auto dev : result) {
-            printf("device: %s\r\n", dev.name.c_str());
+
             for (auto matchName : supportDevices) {
                 if (dev.name == matchName) {
                     QString addrStr = btAddressToString(dev.address);
                     std::unique_ptr<VivoDevice> newDevice = std::make_unique<VivoDevice>(std::string(matchName), addrStr);
 
-                    printf("matched: %s\r\n", addrStr.toLocal8Bit().toStdString().c_str());
                     return newDevice;
                 }
             }
