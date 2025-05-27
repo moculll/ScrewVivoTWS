@@ -20,11 +20,16 @@ public:
         std::vector<uint8_t> data;
 
         enum class NoiseMode {
-            ReductionMode = 0,
+            NoiseMode = 0,
             CloseMode,
             TransparentMode,
-            NoiseMode,
         };
+
+        NoiseMaker(NoiseMode mode)
+        {
+            setMode(mode);
+        }
+
         void setMode(NoiseMode mode)
         {
             const auto& map = getBaseCommandMap();
@@ -58,6 +63,7 @@ public:
             NextMode,
             NoneMode = 0x06,
         };
+
 
         void setLeftMode(EarDoubleClickMode mode){
             const auto& map = getBaseCommandMap();
@@ -102,6 +108,7 @@ public:
             
         };
 
+
         void setMode(DoubleClickMode doubleClickMode, LongPressMode longPressMode) {
             const auto& map = getBaseCommandMap();
             auto it = map.find("doubleOrLongPress");
@@ -125,6 +132,8 @@ public:
             SwitchBetweenNoiseAndCloseAndTransparentMode,
             NoneMode = 0xff,
         };
+
+        
 
         void setMode(EarLongPressMode leftMode, EarLongPressMode rightMode) {
             const auto& map = getBaseCommandMap();
@@ -154,6 +163,11 @@ public:
             SoothingMode = 5,
         };
 
+        DeepxEffectMaker(DeepxEffectMode mode)
+        {
+            setMode(mode);
+        }
+
         void setMode(DeepxEffectMode mode) {
             const auto& map = getBaseCommandMap();
             auto it = map.find("deepXEffect");
@@ -177,6 +191,11 @@ public:
             OffMode = 0,
             OnMode,
         };
+
+        WearDetectionMaker(WearDetectionMode mode)
+        {
+            setMode(mode);
+        }
 
         void setMode(WearDetectionMode mode) {
             const auto& map = getBaseCommandMap();
@@ -258,6 +277,7 @@ public:
                 if (!pendingWriteData.empty()) {
                     QByteArray byteArray(reinterpret_cast<const char*>(pendingWriteData.data()), pendingWriteData.size());
                     socket->write(byteArray);
+                    
                     pendingWriteData.clear();
                 
                 }
@@ -267,6 +287,38 @@ public:
         }
     }
 
+    std::vector<uint8_t> read()
+    {
+        std::vector<uint8_t> data;
+
+        if (!socket || socket->state() != QBluetoothSocket::SocketState::ConnectedState) {
+            return data;
+        }
+
+        if (!socket->bytesAvailable()) {
+            qDebug() << "No data available to read";
+            return data;
+        }
+
+        QByteArray byteArray = socket->readAll();
+        if (byteArray.isEmpty()) {
+            qWarning() << "Read zero bytes from socket";
+            return data;
+        }
+
+        data.resize(byteArray.size());
+        std::memcpy(data.data(), byteArray.constData(), byteArray.size());
+
+        qDebug() << "Read" << data.size() << "bytes from socket";
+        return data;
+    }
+    bool isConnected()
+    {
+        if (!socket)
+            return false;
+        
+        return (socket->state() == QBluetoothSocket::SocketState::ConnectedState);
+    }
 
     std::string deviceName;
     QString macAddr;

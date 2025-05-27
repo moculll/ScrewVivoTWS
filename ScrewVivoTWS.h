@@ -1,16 +1,20 @@
-#pragma once
-
+﻿#pragma once
 #include <QtWidgets/QWidget>
-#include "ui_ScrewVivoTWS.h"
+#include <QTimer>
 #include "VivoController/VivoController.h"
-class ScrewVivoTWS : public QWidget
+#include "MTrayMenu/MTrayMenu.h"
+#include "nlohmann/json.hpp"
+class ScrewVivoTWS
 {
-    Q_OBJECT
-
 public:
-    ScrewVivoTWS(QWidget *parent = nullptr);
+    
+    ScrewVivoTWS();
     ~ScrewVivoTWS();
     std::unique_ptr<VivoDevice> device;
+    std::unique_ptr<MTrayMenu> trayMenu;
+
+    std::shared_ptr<nlohmann::json> uiTextJsonData;
+    std::unique_ptr<QTimer> readAsyncTimer;
 private:
-    Ui::ScrewVivoTWSClass ui;
+    bool loadJson(std::string fileName);
 };

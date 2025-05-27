@@ -36,7 +36,7 @@
     <Import Project="$(QtMsBuild)\qt_defaults.props" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
-    <QtInstall>6.5.3_msvc2019_64</QtInstall>
+    <QtInstall>6.7.2_msvc2019_64</QtInstall>
     <QtModules>core;gui;widgets;bluetooth;concurrent;texttospeech</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
     <QtDeploy>true</QtDeploy>
@@ -61,7 +61,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <IncludePath>$(ProjectDir)\spdlog\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\json\include;$(ProjectDir)\spdlog\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
@@ -103,15 +103,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Accessibility\AccessMgr.cpp" />
+    <ClCompile Include="MTrayMenu\MTrayMenu.cpp">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
+    </ClCompile>
     <ClCompile Include="VivoController\VivoController.cpp" />
     <QtRcc Include="ScrewVivoTWS.qrc" />
     <QtUic Include="ScrewVivoTWS.ui" />
-    <QtMoc Include="ScrewVivoTWS.h" />
+    <ClInclude Include="ScrewVivoTWS.h" />
     <ClCompile Include="ScrewVivoTWS.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Accessibility\AccessMgr.h" />
+    <QtMoc Include="MTrayMenu\MTrayMenu.h" />
     <ClInclude Include="VivoController\VivoController.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

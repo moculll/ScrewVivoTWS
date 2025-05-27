@@ -27,6 +27,9 @@
     <Filter Include="AccessMgr">
       <UniqueIdentifier>{c465b00d-571c-43c6-aaad-f899b2d8e923}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MTrayMenu">
+      <UniqueIdentifier>{8481b1e9-67a3-41ca-882f-7962b1ddd6bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="ScrewVivoTWS.qrc">
@@ -35,9 +38,6 @@
     <QtUic Include="ScrewVivoTWS.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtMoc Include="ScrewVivoTWS.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <ClCompile Include="ScrewVivoTWS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -52,6 +52,9 @@
     <ClCompile Include="Accessibility\AccessMgr.cpp">
       <Filter>AccessMgr</Filter>
     </ClCompile>
+    <ClCompile Include="MTrayMenu\MTrayMenu.cpp">
+      <Filter>MTrayMenu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VivoController\VivoController.h">
@@ -60,5 +63,13 @@
     <ClInclude Include="Accessibility\AccessMgr.h">
       <Filter>AccessMgr</Filter>
     </ClInclude>
+    <ClInclude Include="ScrewVivoTWS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="MTrayMenu\MTrayMenu.h">
+      <Filter>MTrayMenu</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>
