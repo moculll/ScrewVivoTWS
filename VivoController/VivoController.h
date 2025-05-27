@@ -115,7 +115,7 @@ public:
             if (it != map.end()) {
                 data = it->second;
                 if (data.size()) {
-                    data[data.size() - 1] = (static_cast<uint8_t>(doubleClickMode) & 0b10) | (static_cast<uint8_t>(longPressMode) & 0b01);
+                    data[data.size() - 1] = ((static_cast<uint8_t>(doubleClickMode) << 1) & 0b10) | (static_cast<uint8_t>(longPressMode) & 0b01);
                 }
             }
         }
@@ -263,7 +263,7 @@ public:
     {
         if (!socket)
             return;
-
+        
         if (socket->state() == QBluetoothSocket::SocketState::ConnectedState) {
  
             QByteArray byteArray(reinterpret_cast<const char*>(data.data()), data.size());
