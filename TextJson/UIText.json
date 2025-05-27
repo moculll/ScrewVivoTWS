@@ -1,0 +1,141 @@
+{
+    "Chinese": {
+        "Noise": {
+            "title": "噪声控制",
+            "options": {
+                "Transparent": "通透",
+                "Close": "关闭",
+                "Noise": "降噪"
+            }
+        },
+        "DeepX": {
+            "title": "DeepX立体声效",
+            "options": {
+                "Default": "标准(默认)",
+                "HumanSound": "清澈人声",
+                "DeepBass": "超重低音",
+                "ClearTreble": "清亮高音",
+                "Soothing": "悠扬听书"
+            }
+        },
+        "DoubleClickRight": {
+            "title": "双击右耳",
+            "options": {
+                "PlayPause": "播放 & 暂停",
+                "Previous": "上一首",
+                "Next": "下一首",
+                "WakeUpAssistant": "唤醒语音助手"
+            }
+
+        },
+        "DoubleClickLeft": {
+            "title": "双击左耳",
+            "options": {
+                "PlayPause": "播放 & 暂停",
+                "Previous": "上一首",
+                "Next": "下一首",
+                "WakeUpAssistant": "唤醒语音助手"
+            }
+            
+        },
+        "PressRight": {
+            "title": "长按右耳",
+            "options": {
+                "NoiseSwitch": "开启 & 关闭降噪",
+                "TransparentSwitch": "开启 & 关闭通透",
+                "NoiseTransparentSwitch": "降噪 & 通透之间切换",
+                "NoiseCloseTransparentSwitch": "降噪 & 关闭 & 通透之间切换",
+                "None": "无"
+            }
+            
+        },
+        "PressLeft": {
+            "title": "长按左耳",
+            "options": {
+                "NoiseSwitch": "开启 & 关闭降噪",
+                "TransparentSwitch": "开启 & 关闭通透",
+                "NoiseTransparentSwitch": "降噪 & 通透之间切换",
+                "NoiseCloseTransparentSwitch": "降噪 & 关闭 & 通透之间切换",
+                "None": "无"
+            }
+            
+        },
+        "DoubleClickAcceptCall": {
+            "title": "双击接听 & 结束通话"
+        },
+        "PressRefuseCall": {
+            "title": "长按拒接来电"
+        },
+        "WearDetection": {
+            "title": "佩戴检测"
+        }
+    },
+    "English": {
+        "Noise": {
+            "title": "Noise Control",
+            "options": {
+                "Transparent": "Ambient",
+                "Close": "Off",
+                "Noise": "ANC"
+            }
+        },
+        "DeepX": {
+            "title": "DeepX Effect",
+            "options": {
+                "Default": "Default",
+                "HumanSound": "Vocal",
+                "DeepBass": "Bass+",
+                "ClearTreble": "Treble+",
+                "Soothing": "Audiobook"
+            }
+        },
+        "DoubleClickRight": {
+            "title": "Double-tap Right",
+            "options": {
+                "PlayPause": "Play/Pause",
+                "Previous": "Prev Track",
+                "Next": "Next Track",
+                "WakeUpAssistant": "Voice Assistant"
+            }
+        },
+        "DoubleClickLeft": {
+            "title": "Double-tap Left",
+            "options": {
+                "PlayPause": "Play/Pause",
+                "Previous": "Prev Track",
+                "Next": "Next Track",
+                "WakeUpAssistant": "Voice Assistant"
+            }
+        },
+        "PressRight": {
+            "title": "Hold Right",
+            "options": {
+                "NoiseSwitch": "Toggle ANC",
+                "TransparentSwitch": "Toggle Ambient",
+                "NoiseTransparentSwitch": "ANC/Ambient",
+                "NoiseCloseTransparentSwitch": "ANC/Off/Ambient",
+                "None": "None"
+            }
+        },
+        "PressLeft": {
+            "title": "Hold Left",
+            "options": {
+                "NoiseSwitch": "Toggle ANC",
+                "TransparentSwitch": "Toggle Ambient",
+                "NoiseTransparentSwitch": "ANC/Ambient",
+                "NoiseCloseTransparentSwitch": "ANC/Off/Ambient",
+                "None": "None"
+            }
+        },
+        "DoubleClickAcceptCall": {
+            "title": "Double-tap: Answer/End"
+        },
+        "PressRefuseCall": {
+            "title": "Hold: Decline"
+        },
+        "WearDetection": {
+            "title": "Wear Sensor"
+        }
+    }
+}
+  
