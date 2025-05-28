@@ -31,6 +31,7 @@ QPixmap MTrayMenu::loadCroppedIcon(const QString& path) {
 void MTrayMenu::addOption(const QString &name, std::function<void()> callback)
 {
     QAction* action = new QAction(name, trayMenu);
+
     if(callback)
         QObject::connect(action, &QAction::triggered, this, std::move(callback));
 
@@ -101,6 +102,20 @@ void MTrayMenu::setTrayTitle(const QString &title)
 
 }
 
+QAction* MTrayMenu::findActionByObjectName(QMenu* menu, const QString& objName) {
+    for (QAction* action : menu->actions()) {
+        if (action->objectName() == objName)
+            return action;
+
+        if (QMenu* subMenu = action->menu()) {
+            QAction* result = findActionByObjectName(subMenu, objName);
+            if (result)
+                return result;
+        }
+    }
+    return nullptr;
+}
+
 MTrayMenu::MTrayMenu(QObject* parent) : QObject(parent)
 {
     QAccessible::queryAccessibleInterface(this);
@@ -111,7 +126,7 @@ MTrayMenu::MTrayMenu(QObject* parent) : QObject(parent)
     
     
     QAction* exitAction = new QAction("退出", trayMenu);
-    
+    exitAction->setObjectName()
 
     QObject::connect(exitAction, &QAction::triggered, this, &QApplication::quit);
     /* TOBE FIXED: display error if there is only one action... */
@@ -126,7 +141,7 @@ MTrayMenu::MTrayMenu(QObject* parent) : QObject(parent)
     trayMenu->setStyleSheet(MenuStyle);
     /* avoid memory leak */
     trayIcon->setContextMenu(trayMenu);
-
+    
 }
 
 MTrayMenu::~MTrayMenu()

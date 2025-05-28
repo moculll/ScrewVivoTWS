@@ -68,6 +68,23 @@
         },
         "WearDetection": {
             "title": "佩戴检测"
+        },
+        "Battery": {
+            "title": "电量",
+            "options": {
+                "leftEar": {
+                    "title": "左耳",
+                    "options": {
+                        "value": "100"
+                    }
+                },
+                "rightEar": {
+                    "title": "右耳",
+                    "options": {
+                        "value": "100"
+                    }
+                }
+            }
         }
     },
     "English": {
@@ -135,6 +152,23 @@
         },
         "WearDetection": {
             "title": "Wear Sensor"
+        },
+        "Battery": {
+            "title": "Battery Level",
+            "options": {
+                "leftEar": {
+                    "title": "Left",
+                    "options": {
+                        "value": "100"
+                    }
+                },
+                "rightEar": {
+                    "title": "Right",
+                    "options": {
+                        "value": "100"
+                    }
+                }
+            }
         }
     }
 }

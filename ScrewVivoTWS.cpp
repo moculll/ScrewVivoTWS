@@ -3,6 +3,10 @@
 #include "spdlog/spdlog.h"
 #include <fstream>
 #include <QTimer>
+#include <iostream>
+#include <string>
+#include <ranges>
+#include <algorithm>
 using json = nlohmann::json;
 
 bool ScrewVivoTWS::loadJson(std::string fileName)
@@ -22,7 +26,47 @@ bool ScrewVivoTWS::loadJson(std::string fileName)
     }
     return true;
 }
-void parseData(const std::vector<uint8_t>& buffer) {
+
+void ScrewVivoTWS::getJsonToSettingStorage(nlohmann::json& data)
+{
+    QString eventId = QString::fromStdString(data["eventId"]);
+    if(eventId != "A102|10084")
+        return;
+    QString batteryOrigin = QString::fromStdString(data["C"]);
+    QStringList parts = batteryOrigin.split('_');
+    settingStorage.leftBattery = parts.value(0);
+    settingStorage.rightBattery = parts.value(1);
+
+
+    QString wearEnable = QString::fromStdString(data["params"]["wear_enable"]);
+    settingStorage.wearDetectionMode = static_cast<decltype(settingStorage.wearDetectionMode)>(wearEnable.toUInt());
+    
+
+    QString noiseMode = QString::fromStdString(data["params"]["noise"]);
+    settingStorage.noiseMode = static_cast<decltype(settingStorage.noiseMode)>(noiseMode.toUInt());
+
+    QString doubleClickLeftMode = QString::fromStdString(data["params"]["double_click_l"]);
+    settingStorage.doubleClickModeLeft = static_cast<decltype(settingStorage.doubleClickModeLeft)>(doubleClickLeftMode.toUInt());
+
+    QString doubleClickRightMode = QString::fromStdString(data["params"]["double_click_r"]);
+    settingStorage.doubleClickModeRight = static_cast<decltype(settingStorage.doubleClickModeRight)>(doubleClickRightMode.toUInt());
+
+    QString longPressModeLeft = QString::fromStdString(data["params"]["long_click_l"]);
+    settingStorage.longPressModeLeft = static_cast<decltype(settingStorage.longPressModeLeft)>(longPressModeLeft.toUInt());
+
+    QString longPressModeRight = QString::fromStdString(data["params"]["long_click_r"]);
+    settingStorage.longPressModeRight = static_cast<decltype(settingStorage.longPressModeRight)>(longPressModeRight.toUInt());
+
+    QString deepxEffectMode = QString::fromStdString(data["params"]["eq_type"]);
+    settingStorage.deepxEffectMode = static_cast<decltype(settingStorage.deepxEffectMode)>(deepxEffectMode.toUInt());
+
+
+    
+
+
+}
+
+void ScrewVivoTWS::parseData(const std::vector<uint8_t>& buffer) {
     // 将 vector 转为 string
     std::string data(buffer.begin(), buffer.end());
 
@@ -39,12 +83,15 @@ void parseData(const std::vector<uint8_t>& buffer) {
 
     try {
         nlohmann::json parsed = nlohmann::json::parse(json_str);
+        getJsonToSettingStorage(parsed);
+        
         spdlog::info("Parsed JSON: {}", parsed.dump(4)); // pretty print
     }
     catch (const nlohmann::json::parse_error& e) {
         spdlog::error("JSON parse error: {}", e.what());
     }
 }
+
 /* TOBE FIXED: status refresh & record */
 ScrewVivoTWS::ScrewVivoTWS()
 {
@@ -64,25 +111,27 @@ ScrewVivoTWS::ScrewVivoTWS()
         auto NoiseOption = QString::fromStdString(textData["Noise"]["title"]);
         trayMenu->addOption(QString::fromStdString(textData["Noise"]["title"]), nullptr);
         trayMenu->addOption(QString::fromStdString(textData["Noise"]["options"]["Transparent"]), NoiseOption, [&]() {
-            VivoDeviceCommand::NoiseMaker noiseMaker(VivoDeviceCommand::NoiseMaker::NoiseMode::TransparentMode);
+            settingStorage.noiseMode = VivoDeviceCommand::NoiseMaker::NoiseMode::TransparentMode;
+
+            VivoDeviceCommand::NoiseMaker noiseMaker(settingStorage.noiseMode);
 
             if (device)
-                device->write(noiseMaker.data);
-                
-            
-                
+                device->write(noiseMaker.data); 
         });
 
         trayMenu->addOption(QString::fromStdString(textData["Noise"]["options"]["Close"]), NoiseOption, [&]() {
-            VivoDeviceCommand::NoiseMaker noiseMaker(VivoDeviceCommand::NoiseMaker::NoiseMode::CloseMode);
-          
+            settingStorage.noiseMode = VivoDeviceCommand::NoiseMaker::NoiseMode::CloseMode;
+
+            VivoDeviceCommand::NoiseMaker noiseMaker(settingStorage.noiseMode);
 
             if (device)
                 device->write(noiseMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["Noise"]["options"]["Noise"]), NoiseOption, [&]() {
-            VivoDeviceCommand::NoiseMaker noiseMaker(VivoDeviceCommand::NoiseMaker::NoiseMode::NoiseMode);
+            settingStorage.noiseMode = VivoDeviceCommand::NoiseMaker::NoiseMode::NoiseMode;
 
+            VivoDeviceCommand::NoiseMaker noiseMaker(settingStorage.noiseMode);
 
             if (device)
                 device->write(noiseMaker.data);
@@ -91,119 +140,199 @@ ScrewVivoTWS::ScrewVivoTWS()
         auto DeepXOption = QString::fromStdString(textData["DeepX"]["title"]);
         trayMenu->addOption(QString::fromStdString(textData["DeepX"]["title"]), nullptr);
         trayMenu->addOption(QString::fromStdString(textData["DeepX"]["options"]["Default"]), DeepXOption, [&]() {
-            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::DefaultMode);
+            settingStorage.deepxEffectMode = VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::DefaultMode;
+
+            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(settingStorage.deepxEffectMode);
             if (device)
                 device->write(depxEffectMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["DeepX"]["options"]["HumanSound"]), DeepXOption, [&]() {
-            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::HumanSoundMode);
+            settingStorage.deepxEffectMode = VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::HumanSoundMode;
+
+            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(settingStorage.deepxEffectMode);
             if (device)
                 device->write(depxEffectMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["DeepX"]["options"]["DeepBass"]), DeepXOption, [&]() {
-            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::DeepBassMode);
+            settingStorage.deepxEffectMode = VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::DeepBassMode;
+
+            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(settingStorage.deepxEffectMode);
             if (device)
                 device->write(depxEffectMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["DeepX"]["options"]["ClearTreble"]), DeepXOption, [&]() {
-            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::ClearTrebleMode);
+            settingStorage.deepxEffectMode = VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::ClearTrebleMode;
+
+            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(settingStorage.deepxEffectMode);
             if (device)
                 device->write(depxEffectMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["DeepX"]["options"]["Soothing"]), DeepXOption, [&]() {
-            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::SoothingMode);
+            
+            settingStorage.deepxEffectMode = VivoDeviceCommand::DeepxEffectMaker::DeepxEffectMode::SoothingMode;
+
+            VivoDeviceCommand::DeepxEffectMaker depxEffectMaker(settingStorage.deepxEffectMode);
             if (device)
                 device->write(depxEffectMaker.data);
         });
-
+        
         
         auto DoubleClickRightOption = QString::fromStdString(textData["DoubleClickRight"]["title"]);
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickRight"]["title"]), nullptr);
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickRight"]["options"]["PlayPause"]), DoubleClickRightOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setRightMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PlayOrPauseMode);
+
+            settingStorage.doubleClickModeRight = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PlayOrPauseMode;
+
+
+            earDoubleClickMaker.setRightMode(settingStorage.doubleClickModeRight);
             if (device)
                 device->write(earDoubleClickMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickRight"]["options"]["Previous"]), DoubleClickRightOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setRightMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PrevMode);
+
+            settingStorage.doubleClickModeRight = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PrevMode;
+
+
+            earDoubleClickMaker.setRightMode(settingStorage.doubleClickModeRight);
             if (device)
                 device->write(earDoubleClickMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickRight"]["options"]["Next"]), DoubleClickRightOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setRightMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::NextMode);
+
+            settingStorage.doubleClickModeRight = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::NextMode;
+
+
+            earDoubleClickMaker.setRightMode(settingStorage.doubleClickModeRight);
             if (device)
                 device->write(earDoubleClickMaker.data);
+            
         });
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickRight"]["options"]["WakeUpAssistant"]), DoubleClickRightOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setRightMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::WakeupVoiceAssistantMode);
+
+            settingStorage.doubleClickModeRight = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PlayOrPauseMode;
+
+
+            earDoubleClickMaker.setRightMode(settingStorage.doubleClickModeRight);
             if (device)
                 device->write(earDoubleClickMaker.data);
+            
         });
 
         auto DoubleClickLeftOption = QString::fromStdString(textData["DoubleClickLeft"]["title"]);
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickLeft"]["title"]), nullptr);
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickLeft"]["options"]["PlayPause"]), DoubleClickLeftOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setLeftMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PlayOrPauseMode);
+
+            settingStorage.doubleClickModeLeft = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PlayOrPauseMode;
+
+
+            earDoubleClickMaker.setLeftMode(settingStorage.doubleClickModeLeft);
             if (device)
                 device->write(earDoubleClickMaker.data);
+            
 
         });
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickLeft"]["options"]["Previous"]), DoubleClickLeftOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setLeftMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PrevMode);
+
+            settingStorage.doubleClickModeLeft = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::PrevMode;
+
+
+            earDoubleClickMaker.setLeftMode(settingStorage.doubleClickModeLeft);
             if (device)
                 device->write(earDoubleClickMaker.data);
         });
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickLeft"]["options"]["Next"]), DoubleClickLeftOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setLeftMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::NextMode);
+
+            settingStorage.doubleClickModeLeft = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::NextMode;
+
+
+            earDoubleClickMaker.setLeftMode(settingStorage.doubleClickModeLeft);
             if (device)
                 device->write(earDoubleClickMaker.data);
+           
         });
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickLeft"]["options"]["WakeUpAssistant"]), DoubleClickLeftOption, [&]() {
             VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setLeftMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::WakeupVoiceAssistantMode);
+
+            settingStorage.doubleClickModeLeft = VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::WakeupVoiceAssistantMode;
+
+
+            earDoubleClickMaker.setLeftMode(settingStorage.doubleClickModeLeft);
             if (device)
                 device->write(earDoubleClickMaker.data);
-        });
 
+        });
+        
         /* TOBE FIXED: status record */
         auto PressRightOption = QString::fromStdString(textData["PressRight"]["title"]);
         trayMenu->addOption(QString::fromStdString(textData["PressRight"]["title"]), nullptr);
         trayMenu->addOption(QString::fromStdString(textData["PressRight"]["options"]["NoiseSwitch"]), PressRightOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseNoiseMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseNoiseMode);
+
+            settingStorage.longPressModeRight = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseNoiseMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
         trayMenu->addOption(QString::fromStdString(textData["PressRight"]["options"]["TransparentSwitch"]), PressRightOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseTransparentMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseTransparentMode);
+
+            settingStorage.longPressModeRight = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseTransparentMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
         trayMenu->addOption(QString::fromStdString(textData["PressRight"]["options"]["NoiseTransparentSwitch"]), PressRightOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndTransparentMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndTransparentMode);
+
+            settingStorage.longPressModeRight = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndTransparentMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
         trayMenu->addOption(QString::fromStdString(textData["PressRight"]["options"]["NoiseCloseTransparentSwitch"]), PressRightOption, [&]() {
+
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode);
+
+            settingStorage.longPressModeRight = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
         trayMenu->addOption(QString::fromStdString(textData["PressRight"]["options"]["None"]), PressRightOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::NoneMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::NoneMode);
+
+            settingStorage.longPressModeRight = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::NoneMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
 
         /* TOBE FIXED: status record */
@@ -211,57 +340,110 @@ ScrewVivoTWS::ScrewVivoTWS()
         trayMenu->addOption(QString::fromStdString(textData["PressLeft"]["title"]), nullptr);
         trayMenu->addOption(QString::fromStdString(textData["PressLeft"]["options"]["NoiseSwitch"]), PressLeftOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseNoiseMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode);
+
+            settingStorage.longPressModeLeft = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseNoiseMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
         trayMenu->addOption(QString::fromStdString(textData["PressLeft"]["options"]["TransparentSwitch"]), PressLeftOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseTransparentMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode);
+
+            settingStorage.longPressModeLeft = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::OpenCloseTransparentMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
         trayMenu->addOption(QString::fromStdString(textData["PressLeft"]["options"]["NoiseTransparentSwitch"]), PressLeftOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndTransparentMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode);
+
+            settingStorage.longPressModeLeft = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndTransparentMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
+
         });
         trayMenu->addOption(QString::fromStdString(textData["PressLeft"]["options"]["NoiseCloseTransparentSwitch"]), PressLeftOption, [&]() {
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode);
+
+            settingStorage.longPressModeLeft = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
         });
         trayMenu->addOption(QString::fromStdString(textData["PressLeft"]["options"]["None"]), PressLeftOption, [&]() {
+
             VivoDeviceCommand::EarLongPressMaker earLongPressMaker;
-            earLongPressMaker.setMode(VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::NoneMode, VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::SwitchBetweenNoiseAndCloseAndTransparentMode);
+
+            settingStorage.longPressModeLeft = VivoDeviceCommand::EarLongPressMaker::EarLongPressMode::NoneMode;
+
+
+            earLongPressMaker.setMode(settingStorage.longPressModeLeft, settingStorage.longPressModeRight);
             if (device)
                 device->write(earLongPressMaker.data);
         });
-
-        /* TOBE FIXED: status record */
+        
         trayMenu->addOption(QString::fromStdString(textData["DoubleClickAcceptCall"]["title"]), [&]() {
-            VivoDeviceCommand::EarDoubleClickMaker earDoubleClickMaker;
-            earDoubleClickMaker.setLeftMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::NextMode);
-            earDoubleClickMaker.setRightMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::NextMode);
-            if (device)
-                device->write(earDoubleClickMaker.data);
-        });
+            VivoDeviceCommand::AcceptCallMaker acceptCallMaker;
 
+            if (settingStorage.doubleClickAcceptCallMode == VivoDeviceCommand::AcceptCallMaker::DoubleClickMode::DoubleClickNoneMode) {
+                settingStorage.doubleClickAcceptCallMode = VivoDeviceCommand::AcceptCallMaker::DoubleClickMode::DoubleClickAcceprOrRefuseMode;
+            }
+            else {
+                settingStorage.doubleClickAcceptCallMode = VivoDeviceCommand::AcceptCallMaker::DoubleClickMode::DoubleClickNoneMode;
+            }
+
+            acceptCallMaker.setMode(settingStorage.doubleClickAcceptCallMode, settingStorage.longPressRefuseCallMode);
+
+            if (device)
+                device->write(acceptCallMaker.data);
+        });
+        
         trayMenu->addOption(QString::fromStdString(textData["PressRefuseCall"]["title"]), [&]() {
             VivoDeviceCommand::AcceptCallMaker acceptCallMaker;
-            acceptCallMaker.setMode(VivoDeviceCommand::AcceptCallMaker::DoubleClickMode::DoubleClickAcceprOrRefuseMode, VivoDeviceCommand::AcceptCallMaker::LongPressMode::LongPressRefuseMode);
+
+            if (settingStorage.longPressRefuseCallMode == VivoDeviceCommand::AcceptCallMaker::LongPressMode::LongPressNoneMode) {
+                settingStorage.longPressRefuseCallMode = VivoDeviceCommand::AcceptCallMaker::LongPressMode::LongPressRefuseMode;
+            }
+            else {
+                settingStorage.longPressRefuseCallMode = VivoDeviceCommand::AcceptCallMaker::LongPressMode::LongPressNoneMode;
+            }
+
+            acceptCallMaker.setMode(settingStorage.doubleClickAcceptCallMode, settingStorage.longPressRefuseCallMode);
+            
             if (device)
                 device->write(acceptCallMaker.data);
         });
 
+        
         trayMenu->addOption(QString::fromStdString(textData["WearDetection"]["title"]), [&]() {
-            VivoDeviceCommand::WearDetectionMaker wearDetectionMaker(VivoDeviceCommand::WearDetectionMaker::WearDetectionMode::OnMode);
+
+            if (settingStorage.wearDetectionMode == VivoDeviceCommand::WearDetectionMaker::WearDetectionMode::OnMode) {
+                settingStorage.wearDetectionMode = VivoDeviceCommand::WearDetectionMaker::WearDetectionMode::OffMode;
+            }
+            else {
+                settingStorage.wearDetectionMode = VivoDeviceCommand::WearDetectionMaker::WearDetectionMode::OnMode;
+            }
+
+            VivoDeviceCommand::WearDetectionMaker wearDetectionMaker(settingStorage.wearDetectionMode);
+            
             if (device)
                 device->write(wearDetectionMaker.data);
         });
 
+        QString BatteryTitle = QString::fromStdString(textData["Battery"]["title"]);
+        trayMenu->addOption(BatteryTitle, nullptr);
+        
         trayMenu->show();
     }
     /* TOBE FIXED: default initialization */
@@ -272,7 +454,7 @@ ScrewVivoTWS::ScrewVivoTWS()
     {
     "A": "1", -> acceptCallMaker
     "B": "2_1",
-    "C": "92_89",
+    "C": "92_89", -> battery
     "D": "1748145525",
     "P": "4_4",
     "V": "2.5.5_2.5.5",
@@ -299,8 +481,14 @@ ScrewVivoTWS::ScrewVivoTWS()
         if (!device->isConnected())
             return;
         auto result = device->read();
-        if(result.size() > 200)
-            parseData(result);
+        /*std::vector<uint8_t> pattern = { 0xFF, 0x03, 0x00, 0x03, 0x00, 0x1b, 0x81 };
+        auto it = std::search(result.begin(), result.end(), pattern.begin(), pattern.end());
+
+        if (it != result.end()) {
+            spdlog::info("contains 81!!!!!");
+        }*/
+        
+        parseData(result);
         
     });
 

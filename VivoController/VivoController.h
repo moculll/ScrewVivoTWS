@@ -57,11 +57,11 @@ public:
         std::vector<uint8_t> data;
 
         enum class EarDoubleClickMode {
-            WakeupVoiceAssistantMode = 0,
-            PlayOrPauseMode,
-            PrevMode,
-            NextMode,
-            NoneMode = 0x06,
+            WakeupVoiceAssistantMode = 0x03,
+            PlayOrPauseMode = 0x04,
+            PrevMode = 0x06,
+            NextMode = 0x07,
+            NoneMode = 0xff,
         };
 
 
