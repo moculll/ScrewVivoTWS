@@ -1,6 +1,7 @@
 ﻿#include "MTrayMenu/MTrayMenu.h"
 #include <QApplication>
 #include <QAccessible>
+#include <QActionGroup>
 #include "spdlog/spdlog.h"
 QPixmap MTrayMenu::loadCroppedIcon(const QString& path) {
     QPixmap original(path);
@@ -28,11 +29,12 @@ QPixmap MTrayMenu::loadCroppedIcon(const QString& path) {
     return cropped.scaled(16, 16, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
-void MTrayMenu::addOption(const QString &name, std::function<void()> callback)
-{
-    QAction* action = new QAction(name, trayMenu);
+void MTrayMenu::addOption(const QString& text, const QString& objectName, std::function<void()> callback, bool checkable) {
+    QAction* action = new QAction(text, trayMenu);
+    action->setCheckable(checkable);
+    action->setObjectName(objectName);
 
-    if(callback)
+    if (callback)
         QObject::connect(action, &QAction::triggered, this, std::move(callback));
 
     QList<QAction*> actions = trayMenu->actions();
@@ -43,6 +45,7 @@ void MTrayMenu::addOption(const QString &name, std::function<void()> callback)
         trayMenu->addAction(action);
     }
 }
+
 QAction* findActionByText(QMenu* menu, const QString& name) {
     for (QAction* action : menu->actions()) {
         if (action->text() == name)
@@ -56,42 +59,63 @@ QAction* findActionByText(QMenu* menu, const QString& name) {
     }
     return nullptr;
 }
-void MTrayMenu::addOption(const QString& name, const QString& parentName, std::function<void()> callback)
-{
-    QAction* parentAction = findActionByText(trayMenu, parentName);
+
+void MTrayMenu::setActionText(const QString& objName, const QString& newText) {
+    QAction* action = findActionByObjectName(trayMenu, objName);
+    if (action) {
+        action->setText(newText);
+    }
+}
+void MTrayMenu::addOption(const QString& text,const QString& objectName, const QString& parentObjName, std::function<void()> callback, bool checkable) {
+    QAction* parentAction = findActionByObjectName(trayMenu, parentObjName);
 
     if (!parentAction) {
-        spdlog::debug("can't find action: {}", parentName.toLocal8Bit().toStdString());
+        spdlog::debug("Can't find action: {}", parentObjName.toLocal8Bit().toStdString());
         return;
     }
+    QAction* childAction = new QAction(text, trayMenu);
+    childAction->setObjectName(objectName);
+    childAction->setCheckable(checkable);
 
     QMenu* subMenu = parentAction->menu();
+
+    QActionGroup* actionGroup = nullptr;
     if (!subMenu) {
         subMenu = new QMenu(trayMenu);
         subMenu->setStyleSheet(MenuStyle);
         parentAction->setMenu(subMenu);
+        actionGroup = new QActionGroup(subMenu);
+        actionGroup->setExclusive(true);
+        
     }
+    else {
+        actionGroup = subMenu->actions()[0]->actionGroup();
 
-    QAction* childAction = new QAction(name, trayMenu);
+    }
+    actionGroup->addAction(childAction);
+    
+    
+    
     if (callback)
         QObject::connect(childAction, &QAction::triggered, std::move(callback));
+    
     subMenu->addAction(childAction);
 }
 
-void MTrayMenu::insertSeparator(const QString &name)
-{
+
+void MTrayMenu::insertSeparator(const QString& objName) {
+    QAction* action = findActionByObjectName(trayMenu, objName);
+    if (!action) return;
+
     QList<QAction*> actions = trayMenu->actions();
-    for (int i = 0; i < actions.size(); ++i) {
-        if (actions[i]->text() == name) {
-            /* insert after */
-            if (i + 1 < actions.size()) {
-                trayMenu->insertSeparator(actions[i + 1]);
-            }
-            else {
-                /* if it's the last one, insert in the end */
-                trayMenu->addSeparator();
-            }
-            return;
+    int index = actions.indexOf(action);
+
+    if (index != -1) {
+        if (index + 1 < actions.size()) {
+            trayMenu->insertSeparator(actions[index + 1]);
+        }
+        else {
+            trayMenu->addSeparator();
         }
     }
 }
@@ -102,7 +126,14 @@ void MTrayMenu::setTrayTitle(const QString &title)
 
 }
 
-QAction* MTrayMenu::findActionByObjectName(QMenu* menu, const QString& objName) {
+void MTrayMenu::setChecked(const QString& objName, bool checked)
+{
+    auto action = findActionByObjectName(objName);
+    if(action->isCheckable())
+        action->setChecked(checked);
+}
+
+QAction* MTrayMenu::findActionByObjectName(QMenu *menu, const QString& objName) {
     for (QAction* action : menu->actions()) {
         if (action->objectName() == objName)
             return action;
@@ -116,6 +147,19 @@ QAction* MTrayMenu::findActionByObjectName(QMenu* menu, const QString& objName) 
     return nullptr;
 }
 
+QAction* MTrayMenu::findActionByObjectName(const QString& objName) {
+    for (QAction* action : trayMenu->actions()) {
+        if (action->objectName() == objName)
+            return action;
+
+        if (QMenu* subMenu = action->menu()) {
+            QAction* result = findActionByObjectName(subMenu, objName);
+            if (result)
+                return result;
+        }
+    }
+    return nullptr;
+}
 MTrayMenu::MTrayMenu(QObject* parent) : QObject(parent)
 {
     QAccessible::queryAccessibleInterface(this);
@@ -126,25 +170,35 @@ MTrayMenu::MTrayMenu(QObject* parent) : QObject(parent)
     
     
     QAction* exitAction = new QAction("退出", trayMenu);
-    exitAction->setObjectName()
+    exitAction->setObjectName("退出");
 
     QObject::connect(exitAction, &QAction::triggered, this, &QApplication::quit);
     /* TOBE FIXED: display error if there is only one action... */
-    /*
-    QAction* showAction = new QAction("显示主界面", trayMenu);
+    
+    /*QAction* showAction = new QAction("显示主界面", trayMenu);
     trayMenu->addSeparator();
     trayMenu->addAction(showAction);
-    */
+    showAction->setCheckable(true);*/
+    
     trayMenu->addSeparator();
     trayMenu->addAction(exitAction);
 
     trayMenu->setStyleSheet(MenuStyle);
-    /* avoid memory leak */
+    /* didn't set trayMenu's parent */
     trayIcon->setContextMenu(trayMenu);
-    
+
+    /* win+B -> enter no response fix */
+    QObject::connect(trayIcon, &QSystemTrayIcon::activated, [&] (QSystemTrayIcon::ActivationReason reason) {
+        if (QSystemTrayIcon::Trigger == reason) {
+            QPoint pos = trayIcon->geometry().topLeft();
+            trayMenu->popup(pos);
+        }
+        
+    });
+ 
 }
 
 MTrayMenu::~MTrayMenu()
 {
-
+    delete trayMenu;
 }

@@ -57,11 +57,11 @@ public:
         std::vector<uint8_t> data;
 
         enum class EarDoubleClickMode {
-            WakeupVoiceAssistantMode = 0x03,
-            PlayOrPauseMode = 0x04,
-            PrevMode = 0x06,
-            NextMode = 0x07,
-            NoneMode = 0xff,
+            WakeupVoiceAssistantMode = 0x00,
+            PlayOrPauseMode = 0x01,
+            PrevMode = 0x02,
+            NextMode = 0x03,
+            NoneMode = 0x06,
         };
 
 
@@ -84,6 +84,19 @@ public:
                 data = it->second;
                 if (data.size()) {
                     data[data.size() - 1] = static_cast<uint8_t>(mode) | 0x10;
+                }
+            }
+
+        }
+
+        void setMode(EarDoubleClickMode leftMode, EarDoubleClickMode rightMode) {
+            const auto& map = getBaseCommandMap();
+            auto it = map.find("earDoubleClick");
+            if (it != map.end()) {
+                data = it->second;
+                if (data.size() >= 2) {
+                    data[data.size() - 2] = static_cast<uint8_t>(leftMode) & 0xff;
+                    data[data.size() - 1] = static_cast<uint8_t>(rightMode) & 0xff;
                 }
             }
 

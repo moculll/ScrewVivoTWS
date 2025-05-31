@@ -11,11 +11,14 @@ class MTrayMenu : public QObject
 	Q_OBJECT
 public:
 	QPixmap loadCroppedIcon(const QString& path);
-    void addOption(const QString& name, std::function<void()> callback);
-    void addOption(const QString& name, const QString& parentName, std::function<void()> callback);
+    void addOption(const QString& text, const QString& objectName, std::function<void()> callback, bool checkable = false);
+    void setActionText(const QString& objName, const QString& newText);
+    void addOption(const QString& text, const QString& objectName, const QString& parentObjName, std::function<void()> callback, bool checkable = false);
     void insertSeparator(const QString& name);
 
     void setTrayTitle(const QString& title);
+
+    void setChecked(const QString& objName, bool checked);
 
     void show()
     {
@@ -28,10 +31,13 @@ public:
         trayIcon->hide();
     }
 
+    QAction* findActionByObjectName(QMenu* menu, const QString& objName);
+    QAction* findActionByObjectName(const QString& objName);
     explicit MTrayMenu(QObject* parent = nullptr);
 	~MTrayMenu();
 
 protected:
+
 	QSystemTrayIcon* trayIcon;
 	QMenu* trayMenu;
     inline static QString MenuStyle = R"(
