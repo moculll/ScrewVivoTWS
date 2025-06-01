@@ -1,7 +1,7 @@
 ﻿#include "ScrewVivoTWS.h"
 #include "Accessibility/AccessMgr.h"
-#include "spdlog/spdlog.h"
-#include <fstream>
+
+
 #include <QTimer>
 #include <iostream>
 #include <string>
@@ -25,6 +25,61 @@ bool ScrewVivoTWS::loadJson(std::string fileName)
         return false;
     }
     return true;
+}
+
+/* TOBE FIXED: we can let users choose whether they want to set settings from this app or just ignore setting until read from earbuds because there will be possibility that users have changed settings from vivo app */
+void ScrewVivoTWS::setUIFromStorage()
+{
+    if(!uiTextJsonData)
+        return;
+    if(!uiTextJsonData->contains(language))
+        return;
+    /* ui set */
+    json& textData = (*uiTextJsonData)[language];
+
+    auto batteryAction = trayMenu->findActionByObjectName(QString::fromStdString(textData["Battery"]["title"]));
+
+    if (batteryAction) {
+        batteryAction->setText(
+            QString::fromStdString(textData["Battery"]["options"]["leftEar"]["title"]) + " " + settingStorage.leftBattery
+            + " " + QString::fromStdString(textData["Battery"]["options"]["rightEar"]["title"]) + " " + settingStorage.rightBattery);
+    }
+
+    auto noiseModeAction = trayMenu->findActionByObjectName(settingStorage.toString(settingStorage.noiseMode));
+    if (noiseModeAction) {
+        noiseModeAction->setChecked(true);
+    }
+
+    auto doubleClickLeftModeAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.doubleClickModeLeft.mode), true>(settingStorage.doubleClickModeLeft.mode));
+    if (doubleClickLeftModeAction) {
+        doubleClickLeftModeAction->setChecked(true);
+    }
+
+    auto doubleClickRightModeAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.doubleClickModeRight.mode), false>(settingStorage.doubleClickModeRight.mode));
+
+    if (doubleClickRightModeAction) {
+        doubleClickRightModeAction->setChecked(true);
+    }
+
+    auto res = settingStorage.doubleClickToString<decltype(settingStorage.doubleClickModeRight.mode), false>(settingStorage.doubleClickModeRight.mode);
+    spdlog::info("get result: {}", res.toLocal8Bit().toStdString());
+
+    auto longPressModeLeftAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.longPressModeLeft.mode), true>(settingStorage.longPressModeLeft.mode));
+    if (longPressModeLeftAction) {
+        longPressModeLeftAction->setChecked(true);
+    }
+
+    auto longPressModeRightAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.longPressModeRight.mode), false>(settingStorage.longPressModeRight.mode));
+    if (longPressModeRightAction) {
+        longPressModeRightAction->setChecked(true);
+    }
+
+    auto deepxEffectModeAction = trayMenu->findActionByObjectName(settingStorage.toString(settingStorage.deepxEffectMode));
+    if (deepxEffectModeAction) {
+        deepxEffectModeAction->setChecked(true);
+    }
+
+
 }
 
 void ScrewVivoTWS::getJsonToSettingStorage(nlohmann::json& data)
@@ -70,42 +125,8 @@ void ScrewVivoTWS::getJsonToSettingStorage(nlohmann::json& data)
     QString deepxEffectMode = QString::fromStdString(data["params"]["eq_type"]);
     settingStorage.deepxEffectMode = static_cast<decltype(settingStorage.deepxEffectMode)>(deepxEffectMode.toUInt());
 
-    /* ui set */
-    json& textData = (*uiTextJsonData)[language];
-    auto noiseModeAction = trayMenu->findActionByObjectName(settingStorage.toString(settingStorage.noiseMode));
-    if (noiseModeAction) {
-        noiseModeAction->setChecked(true);
-    }
-
-    auto doubleClickLeftModeAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.doubleClickModeLeft.mode), true>(settingStorage.doubleClickModeLeft.mode));
-    if (doubleClickLeftModeAction) {
-        doubleClickLeftModeAction->setChecked(true);
-    }
     
-    auto doubleClickRightModeAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.doubleClickModeRight.mode), false>(settingStorage.doubleClickModeRight.mode));
-    
-    if (doubleClickRightModeAction) {
-        doubleClickRightModeAction->setChecked(true);
-    }
-    
-    auto res = settingStorage.doubleClickToString<decltype(settingStorage.doubleClickModeRight.mode), false>(settingStorage.doubleClickModeRight.mode);
-    spdlog::info("get result: {}", res.toLocal8Bit().toStdString());
-
-    auto longPressModeLeftAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.longPressModeLeft.mode), true>(settingStorage.longPressModeLeft.mode));
-    if (longPressModeLeftAction) {
-        longPressModeLeftAction->setChecked(true);
-    }
-
-    auto longPressModeRightAction = trayMenu->findActionByObjectName(settingStorage.doubleClickToString<decltype(settingStorage.longPressModeRight.mode), false>(settingStorage.longPressModeRight.mode));
-    if (longPressModeRightAction) {
-        longPressModeRightAction->setChecked(true);
-    }
-
-    auto deepxEffectModeAction = trayMenu->findActionByObjectName(settingStorage.toString(settingStorage.deepxEffectMode));
-    if (deepxEffectModeAction) {
-        deepxEffectModeAction->setChecked(true);
-    }
-
+    setUIFromStorage();
 
 }
 
@@ -139,6 +160,8 @@ ScrewVivoTWS::ScrewVivoTWS()
     std::unique_ptr accessMgr = std::make_unique<Accessibility::AccessMgr>(Accessibility::SpeakerType::QT_SAPI);
     accessMgr->speaker->init();
     
+    
+
     trayMenu = std::make_unique<MTrayMenu>();
     trayMenu->setTrayTitle("Vivo APP Killer");
 
@@ -543,20 +566,21 @@ ScrewVivoTWS::ScrewVivoTWS()
     });
 
 
-    /*trayMenu->addOption("测试", "测试", [&]() {
-        VivoDeviceCommand::EarDoubleClickMaker wearDetectionMaker;
+    trayMenu->addOption("测试", "测试", [&]() {
+        /*VivoDeviceCommand::EarDoubleClickMaker wearDetectionMaker;
         wearDetectionMaker.setLeftMode(VivoDeviceCommand::EarDoubleClickMaker::EarDoubleClickMode::NextMode);
         wearDetectionMaker.data.data()[wearDetectionMaker.data.size() - 1] = 0x01;
         if (device)
-            device->write(wearDetectionMaker.data);
-    });*/
+            device->write(wearDetectionMaker.data);*/
+        settingStorage.SaveStorgeToJson("storage.json");
+    });
 
     readAsyncTimer->start(1000);
 
    
     /*menu->insertSeparator("test");*/
     
-
+    setUIFromStorage();
     /* init bluetooth device in the end, in case ui haven't been loaded */
     device = VivoController::init();
     if (device)

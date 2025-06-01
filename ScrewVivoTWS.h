@@ -8,7 +8,8 @@
 #include <typeinfo>
 #include <unordered_map>
 #include <QString>
-
+#include "spdlog/spdlog.h"
+#include <fstream>
 class ScrewVivoTWS
 {
 public:
@@ -24,6 +25,7 @@ public:
     std::string language;
 
     bool loadJson(std::string fileName);
+    void setUIFromStorage();
     void getJsonToSettingStorage(nlohmann::json& data);
     void parseData(const std::vector<uint8_t>& buffer);
 
@@ -105,6 +107,88 @@ public:
 
         QString leftBattery;
         QString rightBattery;
+
+        std::shared_ptr<nlohmann::json> storageJson;
+
+        VivoSettingStorage()
+        {
+            storageJson = std::make_shared<nlohmann::json>();
+            if(!LoadStorageFromJson("storage.json"))
+                return;
+            nlohmann::json& storageData = (*storageJson);
+            
+            noiseMode = static_cast<decltype(noiseMode)>(storageData["NoiseMode"].get<int>());
+            deepxEffectMode = static_cast<decltype(deepxEffectMode)>(storageData["DeepXEffectMode"].get<int>());
+            doubleClickModeLeft.mode = static_cast<decltype(doubleClickModeLeft.mode)>(storageData["DoubleClickModeLeft"].get<int>());
+            doubleClickModeRight.mode = static_cast<decltype(doubleClickModeRight.mode)>(storageData["DoubleClickModeRight"].get<int>());
+            longPressModeLeft.mode = static_cast<decltype(longPressModeLeft.mode)>(storageData["LongPressModeLeft"].get<int>());
+            longPressModeRight.mode = static_cast<decltype(longPressModeRight.mode)>(storageData["LongPressModeRight"].get<int>());
+            doubleClickAcceptCallMode = static_cast<decltype(doubleClickAcceptCallMode)>(storageData["DoubleClickAcceptcallMode"].get<int>());
+            longPressRefuseCallMode = static_cast<decltype(longPressRefuseCallMode)>(storageData["LongPressRefuseCallMode"].get<int>());
+            wearDetectionMode = static_cast<decltype(wearDetectionMode)>(storageData["WearDetectionMode"].get<int>());
+
+            /*spdlog::info("default: {} {} {} {} {} {} {} {} {}", static_cast<int>(noiseMode), static_cast<int>(deepxEffectMode), static_cast<int>(doubleClickModeLeft.mode), static_cast<int>(doubleClickModeRight.mode), 
+                static_cast<int>(longPressModeLeft.mode), static_cast<int>(longPressModeRight.mode),
+                static_cast<int>(doubleClickAcceptCallMode), static_cast<int>(longPressRefuseCallMode), static_cast<int>(wearDetectionMode));*/
+
+        }
+
+        bool SaveStorgeToJson(std::string fileName)
+        {
+            if (!storageJson) {
+                spdlog::error("No JSON data to save!");
+                return false;
+            }
+
+            (*storageJson)["NoiseMode"] = static_cast<int>(noiseMode);
+            (*storageJson)["DeepXEffectMode"] = static_cast<int>(deepxEffectMode);
+            (*storageJson)["DoubleClickModeLeft"] = static_cast<int>(doubleClickModeLeft.mode);
+            (*storageJson)["DoubleClickModeRight"] = static_cast<int>(doubleClickModeRight.mode);
+            (*storageJson)["LongPressModeLeft"] = static_cast<int>(longPressModeLeft.mode);
+            (*storageJson)["LongPressModeRight"] = static_cast<int>(longPressModeRight.mode);
+            (*storageJson)["DoubleClickAcceptcallMode"] = static_cast<int>(doubleClickAcceptCallMode);
+            (*storageJson)["LongPressRefuseCallMode"] = static_cast<int>(longPressRefuseCallMode);
+            (*storageJson)["WearDetectionMode"] = static_cast<int>(wearDetectionMode);
+
+            try {
+                std::ofstream file(fileName);
+                if (!file.is_open()) {
+                    spdlog::error("Failed to open {} for writing.", fileName);
+                    return false;
+                }
+                file << storageJson->dump(4);
+                file.close();
+            }
+            catch (const std::exception& e) {
+                spdlog::error("Error saving to JSON file: {}", e.what());
+                return false;
+            }
+
+            spdlog::info("Storage saved to {}", fileName);
+            return true;
+        }
+
+        bool LoadStorageFromJson(std::string fileName)
+        {
+            
+            std::ifstream file(fileName);
+            if (!file.is_open()) {
+                spdlog::debug("can not load %s.", fileName);
+                return false;
+            }
+
+            try {
+                file >> *storageJson.get();
+            }
+            catch (nlohmann::json::parse_error& err) {
+                spdlog::debug("%s parsing error: %s", fileName, err.what());
+                return false;
+            }
+            return true;
+            
+        }
+
+        
 
     };
     VivoSettingStorage settingStorage;

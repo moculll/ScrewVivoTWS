@@ -1,0 +1,11 @@
+{
+    "NoiseMode": 1,
+    "DeepXEffectMode": 1,
+    "DoubleClickModeLeft": "1",
+    "DoubleClickModeRight": "1",
+    "LongPressModeLeft": "1",
+    "LongPressModeRight": "1",
+    "DoubleClickAcceptcallMode": "1",
+    "LongPressRefuseCallMode": "1",
+    "WearDetectionMode": "1"
+}

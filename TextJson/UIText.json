@@ -24,7 +24,8 @@
                 "PlayPause": "播放 & 暂停",
                 "Previous": "上一首",
                 "Next": "下一首",
-                "WakeUpAssistant": "唤醒语音助手"
+                "WakeUpAssistant": "唤醒语音助手",
+                "None": "无"
             }
 
         },
@@ -34,7 +35,8 @@
                 "PlayPause": "播放 & 暂停",
                 "Previous": "上一首",
                 "Next": "下一首",
-                "WakeUpAssistant": "唤醒语音助手"
+                "WakeUpAssistant": "唤醒语音助手",
+                "None": "无"
             }
             
         },
